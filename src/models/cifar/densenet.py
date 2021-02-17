@@ -1,13 +1,15 @@
 # This implementation is based on the DenseNet-BC implementation in torchvision
 # https://github.com/pytorch/vision/blob/master/torchvision/models/densenet.py
 
-import math
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
-from collections import OrderedDict
-from models.layers import ConvBlock, InitialBlock, FinalBlock
+
+from models.layers import FinalBlock
+
 
 def _bn_function_factory(norm, relu, conv):
     def bn_function(*inputs):
@@ -24,11 +26,11 @@ class _DenseLayer(nn.Module):
         self.add_module('norm1', nn.BatchNorm2d(num_input_features)),
         self.add_module('relu1', nn.ReLU(inplace=True)),
         self.add_module('conv1', nn.Conv2d(num_input_features, bn_size * growth_rate,
-                        kernel_size=1, stride=1, bias=False)),
+                                           kernel_size=1, stride=1, bias=False)),
         self.add_module('norm2', nn.BatchNorm2d(bn_size * growth_rate)),
         self.add_module('relu2', nn.ReLU(inplace=True)),
         self.add_module('conv2', nn.Conv2d(bn_size * growth_rate, growth_rate,
-                        kernel_size=3, stride=1, padding=1, bias=False)),
+                                           kernel_size=3, stride=1, padding=1, bias=False)),
         self.drop_rate = drop_rate
         self.efficient = efficient
 
@@ -89,16 +91,17 @@ class DenseNet(nn.Module):
         small_inputs (bool) - set to True if images are 32x32. Otherwise assumes images are larger.
         efficient (bool) - set to True to use checkpointing. Much more memory efficient, but slower.
     """
+
     def __init__(self, opt, small_inputs=True, efficient=True):
         super(DenseNet, self).__init__()
-        
-        width = opt.width # opt.width -> growth_rate
+
+        width = opt.width  # opt.width -> growth_rate
         if (opt.depth - 4) % 3: raise Exception('Depth should be of the form 3n+4')
         n = (opt.depth - 4) // 6
         block_config = (n, n, n)
         compression = 0.5
         assert 0 < compression <= 1, 'compression of densenet should be between 0 and 1'
-        num_init_features = opt.width*2
+        num_init_features = opt.width * 2
         bn_size = 4
         drop_rate = 0
         num_classes = opt.num_classes

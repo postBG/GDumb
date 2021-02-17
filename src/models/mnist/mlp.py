@@ -1,5 +1,7 @@
 import torch.nn as nn
+
 from models.layers import FCBlock, FinalBlock
+
 
 class MLP(nn.Module):
     def __init__(self, opt):

@@ -1,5 +1,7 @@
-from torch import nn
 import copy
+
+from torch import nn
+
 
 class ConvBlock(nn.Module):
     def __init__(self, opt, in_channels, out_channels, kernel_size, stride=1, padding=0, bias=False, groups=1):
@@ -7,15 +9,16 @@ class ConvBlock(nn.Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
-        conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias, groups=groups)
-        
+        conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias,
+                         groups=groups)
+
         layer = [conv]
         if opt.bn:
             if opt.preact:
-                bn = getattr(nn, opt.normtype+'2d')(num_features=in_channels, affine=opt.affine_bn, eps=opt.bn_eps)
+                bn = getattr(nn, opt.normtype + '2d')(num_features=in_channels, affine=opt.affine_bn, eps=opt.bn_eps)
                 layer = [bn]
             else:
-                bn = getattr(nn, opt.normtype+'2d')(num_features=out_channels, affine=opt.affine_bn, eps=opt.bn_eps)
+                bn = getattr(nn, opt.normtype + '2d')(num_features=out_channels, affine=opt.affine_bn, eps=opt.bn_eps)
                 layer = [conv, bn]
 
         if opt.activetype is not 'None':
@@ -37,7 +40,7 @@ class FCBlock(nn.Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         lin = nn.Linear(in_channels, out_channels, bias=bias)
-        
+
         layer = [lin]
         if opt.bn:
             if opt.preact:
@@ -70,6 +73,5 @@ def FinalBlock(opt, in_channels, bias=False):
 def InitialBlock(opt, out_channels, kernel_size, stride=1, padding=0, bias=False):
     in_channels = opt.in_channels
     opt = copy.deepcopy(opt)
-    return ConvBlock(opt=opt, in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
-
-
+    return ConvBlock(opt=opt, in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
+                     stride=stride, padding=padding, bias=bias)

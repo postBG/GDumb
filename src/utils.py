@@ -1,9 +1,10 @@
-import random
-import torch
-import numpy as np
-import os
 import logging
-from torch import nn
+import os
+import random
+
+import numpy as np
+import torch
+
 
 class AverageMeter:
     # Sourced from: https://github.com/pytorch/examples/blob/master/imagenet/main.py
@@ -24,7 +25,8 @@ class AverageMeter:
         self.val = val
         self.sum += val * n
         self.count += n
-        self.avg = self.sum*1.0 / self.count*1.0
+        self.avg = self.sum * 1.0 / self.count * 1.0
+
 
 def get_logger(folder):
     # global logger
@@ -45,6 +47,7 @@ def get_logger(folder):
     logger.addHandler(ch)
     return logger
 
+
 def get_accuracy(y_prob, y_true, class_mask, return_vec=False):
     '''
     Calculates the task and class incremental accuracy of the model
@@ -52,7 +55,7 @@ def get_accuracy(y_prob, y_true, class_mask, return_vec=False):
     y_pred = torch.argmax(y_prob, axis=1)
 
     mask = class_mask[y_true]
-    #assert (y_prob.size() == mask.size()), "Class mask does not match probabilities in output"
+    # assert (y_prob.size() == mask.size()), "Class mask does not match probabilities in output"
     masked_prob = torch.mul(y_prob, mask)
     y_pred_masked = torch.argmax(masked_prob, axis=1)
 
@@ -61,7 +64,7 @@ def get_accuracy(y_prob, y_true, class_mask, return_vec=False):
     if return_vec:
         return acc_full, acc_masked
 
-    return (acc_full*1.0).mean(), (acc_masked*1.0).mean()
+    return (acc_full * 1.0).mean(), (acc_masked * 1.0).mean()
 
 
 def seed_everything(seed):
@@ -75,7 +78,7 @@ def seed_everything(seed):
     np.random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     if torch.cuda.is_available():
-        torch.backends.cudnn.benchmark = True # An exemption for speed :P
+        torch.backends.cudnn.benchmark = True  # An exemption for speed :P
 
 
 def save_model(opt, model):
@@ -83,8 +86,8 @@ def save_model(opt, model):
     Used for saving the pretrained model, not for intermediate breaks in running the code.
     '''
     state = {'opt': opt,
-        'state_dict': model.state_dict()}
-    filename = opt.log_dir+opt.old_exp_name+'/pretrained_model.pth.tar'
+             'state_dict': model.state_dict()}
+    filename = opt.log_dir + opt.old_exp_name + '/pretrained_model.pth.tar'
     torch.save(state, filename)
 
 
@@ -92,15 +95,16 @@ def load_model(opt, model, logger):
     '''
     Used for loading the pretrained model, not for intermediate breaks in running the code.
     '''
-    filepath = opt.log_dir+opt.old_exp_name+'/pretrained_model.pth.tar'
-    assert(os.path.isfile(filepath))
+    filepath = opt.log_dir + opt.old_exp_name + '/pretrained_model.pth.tar'
+    assert (os.path.isfile(filepath))
     logger.debug("=> loading checkpoint '{}'".format(filepath))
     checkpoint = torch.load(filepath, map_location=torch.device('cuda'))
     model.load_state_dict(checkpoint['state_dict'])
     return model
 
+
 def cutmix_data(x, y, alpha=1.0, cutmix_prob=0.5):
-    assert(alpha > 0)
+    assert (alpha > 0)
     # generate mixed sample
     lam = np.random.beta(alpha, alpha)
 
@@ -117,6 +121,7 @@ def cutmix_data(x, y, alpha=1.0, cutmix_prob=0.5):
     # adjust lambda to exactly match pixel ratio
     lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (x.size()[-1] * x.size()[-2]))
     return x, y_a, y_b, lam
+
 
 def rand_bbox(size, lam):
     W = size[2]

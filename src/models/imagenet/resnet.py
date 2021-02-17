@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
+
 from models.layers import ConvBlock, InitialBlock, FinalBlock
+
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -11,11 +13,12 @@ class BasicBlock(nn.Module):
             raise ValueError('BasicBlock only supports groups=1 and base_width=64')
 
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
-        self.conv1block = ConvBlock(opt=opt, in_channels=inplanes, out_channels=planes, kernel_size=3, stride=stride, padding=1)
+        self.conv1block = ConvBlock(opt=opt, in_channels=inplanes, out_channels=planes, kernel_size=3, stride=stride,
+                                    padding=1)
         self.conv2block = ConvBlock(opt=opt, in_channels=planes, out_channels=planes, kernel_size=3, padding=1)
         self.downsample = downsample
         self.relu = nn.ReLU(inplace=True)
-        
+
     def forward(self, x):
         identity = x
         out = self.conv1block(x)
@@ -41,7 +44,8 @@ class Bottleneck(nn.Module):
         width = int(planes * (base_width / 64.)) * groups
         # Both self.conv2 and self.downsample layers downsample the input when stride != 1
         self.conv1block = ConvBlock(opt=opt, in_channels=inplanes, out_channels=width, kernel_size=1)
-        self.conv2block = ConvBlock(opt=opt, in_channels=width, out_channels=width, kernel_size=3, stride=stride, groups=groups, padding=1)
+        self.conv2block = ConvBlock(opt=opt, in_channels=width, out_channels=width, kernel_size=3, stride=stride,
+                                    groups=groups, padding=1)
         self.conv3block = ConvBlock(opt=opt, in_channels=width, out_channels=planes * self.expansion, kernel_size=1)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -80,7 +84,7 @@ class ResNetBase(nn.Module):
         self.layer3 = self._make_layer(opt=opt, block=block, planes=256, blocks=layers[2], stride=2)
         self.layer4 = self._make_layer(opt=opt, block=block, planes=512, blocks=layers[3], stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.dim_out = in_channels=512 * block.expansion
+        self.dim_out = in_channels = 512 * block.expansion
         self.final = FinalBlock(opt=opt, in_channels=512 * block.expansion)
 
         for m in self.modules():
@@ -103,10 +107,12 @@ class ResNetBase(nn.Module):
     def _make_layer(self, opt, block, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
-            downsample = ConvBlock(opt=opt, in_channels=self.inplanes, out_channels=planes * block.expansion, kernel_size=1, stride=stride)
+            downsample = ConvBlock(opt=opt, in_channels=self.inplanes, out_channels=planes * block.expansion,
+                                   kernel_size=1, stride=stride)
 
         layers = []
-        layers.append(block(opt=opt, inplanes=self.inplanes, planes=planes, stride=stride, downsample=downsample, groups=self.groups,
+        layers.append(block(opt=opt, inplanes=self.inplanes, planes=planes, stride=stride, downsample=downsample,
+                            groups=self.groups,
                             base_width=self.base_width))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
@@ -140,22 +146,22 @@ def ResNet(opt):
         model = ResNetBase(opt, BasicBlock, [2, 2, 2, 2])
     elif opt.depth == 34:
         model = ResNetBase(opt, BasicBlock, [3, 4, 6, 3])
-    elif opt.depth == 50 and opt.model=='ResNet':
+    elif opt.depth == 50 and opt.model == 'ResNet':
         model = ResNetBase(opt, Bottleneck, [3, 4, 6, 3])
-    elif opt.depth == 101 and opt.model=='ResNet':
+    elif opt.depth == 101 and opt.model == 'ResNet':
         model = ResNetBase(opt, Bottleneck, [3, 4, 23, 3])
     elif opt.depth == 152:
         model = ResNetBase(opt, Bottleneck, [3, 8, 36, 3])
-    elif opt.depth==50 and opt.model=='ResNext':
-        #Assumes a ResNeXt-50 32x4d model
+    elif opt.depth == 50 and opt.model == 'ResNext':
+        # Assumes a ResNeXt-50 32x4d model
         model = ResNetBase(opt, Bottleneck, [3, 4, 6, 3], groups=32, width_per_group=4)
-    elif opt.depth==101 and opt.model=='ResNext':
+    elif opt.depth == 101 and opt.model == 'ResNext':
         # Assumes a ResNeXt-101 32x8d model
         model = ResNetBase(opt, Bottleneck, [3, 4, 23, 3], groups=32, width_per_group=8)
-    elif opt.depth == 50 and opt.model=='WideResNet':
+    elif opt.depth == 50 and opt.model == 'WideResNet':
         model = ResNetBase(opt, Bottleneck, [3, 4, 6, 3], width_per_group=128)
-    elif opt.depth == 101 and opt.model=='WideResNet':
+    elif opt.depth == 101 and opt.model == 'WideResNet':
         model = ResNetBase(opt, Bottleneck, [3, 4, 23, 3], width_per_group=128)
     else:
-        assert(opt.depth in ['18','34','50','101','152'] and opt.model in ['ResNet','ResNext','WideResNet'])
+        assert (opt.depth in ['18', '34', '50', '101', '152'] and opt.model in ['ResNet', 'ResNext', 'WideResNet'])
     return model
